@@ -17,6 +17,14 @@ type forecastRequest struct {
 
 func NewRouter(store *ForecastStore) http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/demo", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			methodNotAllowed(w)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(indexHTML)
+	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -27,7 +35,7 @@ func NewRouter(store *ForecastStore) http.Handler {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write(indexHTML)
+		_, _ = w.Write(landingHTML)
 	})
 	mux.HandleFunc("/api/agents", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {

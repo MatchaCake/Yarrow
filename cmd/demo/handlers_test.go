@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -30,6 +31,37 @@ func getJSON[T any](t *testing.T, handler http.Handler, path string) T {
 		t.Fatalf("decode %s: %v", path, err)
 	}
 	return out
+}
+
+func getText(t *testing.T, handler http.Handler, path string) string {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodGet, path, nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("GET %s status = %d body=%s", path, rec.Code, rec.Body.String())
+	}
+	return rec.Body.String()
+}
+
+func TestRootServesDedicatedLandingAndDemoServesDashboard(t *testing.T) {
+	handler := testServer(t)
+
+	landing := getText(t, handler, "/")
+	if !strings.Contains(landing, `href="/demo"`) {
+		t.Fatalf("landing page should link to /demo")
+	}
+	if strings.Contains(landing, `id="markets"`) {
+		t.Fatalf("landing page should not include the prediction dashboard")
+	}
+
+	demo := getText(t, handler, "/demo")
+	if !strings.Contains(demo, `id="markets"`) {
+		t.Fatalf("demo page should include the prediction dashboard")
+	}
+	if strings.Contains(demo, `class="intro"`) {
+		t.Fatalf("demo page should not include the landing intro banner")
+	}
 }
 
 func TestMarketsEndpointReturnsTenSortedByAbsDivergence(t *testing.T) {
@@ -162,6 +194,7 @@ func TestPostForecastUpdatesCommunityPrediction(t *testing.T) {
 
 func TestForecastOperationsAPICreatesAndListsForecasts(t *testing.T) {
 	handler := testServer(t)
+	before := getJSON[Market](t, handler, "/api/markets/mkt_001")
 
 	body := bytes.NewBufferString(`{"market_id":"mkt_001","agent":"api_agent","probability_yes":0.82,"reasoning":"API smoke forecast"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/forecasts", body)
@@ -189,6 +222,9 @@ func TestForecastOperationsAPICreatesAndListsForecasts(t *testing.T) {
 	}
 	if created.Market.ID != "mkt_001" || len(created.Market.UserForecasts) != 1 {
 		t.Fatalf("updated market = %+v", created.Market)
+	}
+	if created.Market.CommunityPrediction <= before.CommunityPrediction {
+		t.Fatalf("API forecast should be included in Yarrow prediction: before=%v after=%v", before.CommunityPrediction, created.Market.CommunityPrediction)
 	}
 
 	records := getJSON[[]ForecastRecord](t, handler, "/api/forecasts?market_id=mkt_001&agent=api_agent")

@@ -43,11 +43,13 @@ algoref/.venv/bin/python algoref/generate.py
 go run ./cmd/demo
 ```
 
-Open http://localhost:8080.
+Open http://localhost:8080 for the dedicated landing page, then use the CTA or go directly to http://localhost:8080/demo for the prediction dashboard.
 
-The page loads all 10 markets sorted by absolute divergence, shows the 5-agent leaderboard with two reference rows, opens a per-market analysis modal, and lets audience members submit an in-memory stance on open markets.
+The dashboard loads all 10 markets sorted by absolute divergence, shows the 5-agent leaderboard with two reference rows, opens a per-market agent-debate modal, and lets audience members submit an in-memory stance on open markets. Submitted forecasts are included in the Yarrow consensus, displayed on the market card, and shown in the report modal so API/user-agent predictions are visible in the web demo.
 
-Opening `cmd/demo/index.html` directly, or hosting it as static HTML without the Go API, now runs a local browser-only demo using the baked-in snapshot data. Use the Go server for API-backed in-memory state; append `?api=1` if you run the server on a non-default port and want to force API mode.
+The video narration handoff lives in `docs/demo-video-voiceover.md`.
+
+Opening `cmd/demo/index.html` directly, or hosting it as static HTML without the Go API, runs a local browser-only prediction dashboard using the baked-in snapshot data. Use the Go server for the dedicated landing page and API-backed in-memory state; append `?api=1` if you run the server on a non-default port and want to force API mode.
 
 ## API
 

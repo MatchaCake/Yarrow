@@ -8,14 +8,19 @@ import (
 	"net/http"
 )
 
-//go:embed index.html
+//go:embed index.html landing.html
 var embedded embed.FS
 
 var indexHTML []byte
+var landingHTML []byte
 
 func init() {
 	var err error
 	indexHTML, err = embedded.ReadFile("index.html")
+	if err != nil {
+		panic(err)
+	}
+	landingHTML, err = embedded.ReadFile("landing.html")
 	if err != nil {
 		panic(err)
 	}
