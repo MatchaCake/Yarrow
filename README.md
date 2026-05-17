@@ -47,7 +47,7 @@ Open http://localhost:8080.
 
 The page loads all 10 markets sorted by absolute divergence, shows the 5-agent leaderboard with two reference rows, opens a per-market analysis modal, and lets audience members submit an in-memory stance on open markets.
 
-Do not open `cmd/demo/index.html` directly from Finder or with a `file://` URL. The buttons call same-origin `/api/...` routes, so the Go server must be running.
+Opening `cmd/demo/index.html` directly, or hosting it as static HTML without the Go API, now runs a local browser-only demo using the baked-in snapshot data. Use the Go server for API-backed in-memory state; append `?api=1` if you run the server on a non-default port and want to force API mode.
 
 ## API
 
