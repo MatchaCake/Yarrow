@@ -39,7 +39,22 @@ type Market struct {
 type Forecast struct {
 	Agent          string    `json:"agent"`
 	ProbabilityYes float64   `json:"probability_yes"`
+	Reasoning      string    `json:"reasoning,omitempty"`
 	SubmittedAt    time.Time `json:"submitted_at"`
+}
+
+type ForecastRecord struct {
+	MarketID       string    `json:"market_id"`
+	MarketTitle    string    `json:"market_title"`
+	Agent          string    `json:"agent"`
+	ProbabilityYes float64   `json:"probability_yes"`
+	Reasoning      string    `json:"reasoning,omitempty"`
+	SubmittedAt    time.Time `json:"submitted_at"`
+}
+
+type ForecastOperation struct {
+	Forecast ForecastRecord `json:"forecast"`
+	Market   Market         `json:"market"`
 }
 
 type Report struct {
@@ -160,6 +175,56 @@ func (s *ForecastStore) AddForecast(id string, forecast Forecast) (Market, error
 	market.UserForecasts = append(market.UserForecasts, forecast)
 	s.markets[id] = market
 	return s.enrichedMarketLocked(market), nil
+}
+
+func (s *ForecastStore) SubmitForecast(id string, forecast Forecast) (ForecastOperation, error) {
+	if forecast.SubmittedAt.IsZero() {
+		forecast.SubmittedAt = time.Now().UTC()
+	}
+	market, err := s.AddForecast(id, forecast)
+	if err != nil {
+		return ForecastOperation{}, err
+	}
+	return ForecastOperation{
+		Forecast: forecastRecord(market, forecast),
+		Market:   market,
+	}, nil
+}
+
+func (s *ForecastStore) Forecasts(marketID, agent string) ([]ForecastRecord, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	markets := make([]Market, 0, len(s.markets))
+	if marketID != "" {
+		market, ok := s.markets[marketID]
+		if !ok {
+			return nil, errMarketNotFound
+		}
+		markets = append(markets, market)
+	} else {
+		for _, market := range s.markets {
+			markets = append(markets, market)
+		}
+		sort.SliceStable(markets, func(i, j int) bool {
+			return markets[i].ID < markets[j].ID
+		})
+	}
+
+	records := make([]ForecastRecord, 0)
+	for _, market := range markets {
+		forecasts := append([]Forecast(nil), market.UserForecasts...)
+		sort.SliceStable(forecasts, func(i, j int) bool {
+			return forecasts[i].SubmittedAt.Before(forecasts[j].SubmittedAt)
+		})
+		for _, forecast := range forecasts {
+			if agent != "" && forecast.Agent != agent {
+				continue
+			}
+			records = append(records, forecastRecord(market, forecast))
+		}
+	}
+	return records, nil
 }
 
 func (s *ForecastStore) Report(id string) (Report, bool) {
@@ -368,4 +433,15 @@ func abs(x float64) float64 {
 		return -x
 	}
 	return x
+}
+
+func forecastRecord(market Market, forecast Forecast) ForecastRecord {
+	return ForecastRecord{
+		MarketID:       market.ID,
+		MarketTitle:    market.Title,
+		Agent:          forecast.Agent,
+		ProbabilityYes: forecast.ProbabilityYes,
+		Reasoning:      forecast.Reasoning,
+		SubmittedAt:    forecast.SubmittedAt,
+	}
 }

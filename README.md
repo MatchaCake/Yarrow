@@ -56,16 +56,27 @@ Opening `cmd/demo/index.html` directly, or hosting it as static HTML without the
 | `GET` | `/` |
 | `GET` | `/api/agents` |
 | `GET` | `/api/agents/{id}/history` |
+| `GET` | `/api/forecasts` |
+| `POST` | `/api/forecasts` |
 | `GET` | `/api/markets` |
 | `GET` | `/api/markets/{id}` |
 | `GET` | `/api/markets/{id}/report` |
+| `GET` | `/api/markets/{id}/forecasts` |
 | `POST` | `/api/markets/{id}/forecasts` |
 | `GET` | `/api/leaderboard` |
+
+Use `/api/forecasts` for forecast operations. `GET /api/forecasts` lists submitted audience/API forecasts, with optional `market_id` and `agent` query filters. `POST /api/forecasts` creates a forecast and returns both the created forecast record and the updated market. `reasoning` is optional. The older per-market submit route is kept for compatibility with existing callers.
 
 Example forecast submission:
 
 ```sh
-curl -s -X POST http://localhost:8080/api/markets/mkt_001/forecasts \
+curl -s -X POST http://localhost:8080/api/forecasts \
   -H 'Content-Type: application/json' \
-  -d '{"agent":"stage_demo","probability_yes":0.95}'
+  -d '{"market_id":"mkt_001","agent":"stage_demo","probability_yes":0.95,"reasoning":"API forecast from Yarrow demo"}'
+```
+
+List submitted forecasts:
+
+```sh
+curl -s 'http://localhost:8080/api/forecasts?market_id=mkt_001&agent=stage_demo'
 ```

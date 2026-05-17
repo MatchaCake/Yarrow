@@ -159,3 +159,74 @@ func TestPostForecastUpdatesCommunityPrediction(t *testing.T) {
 		t.Fatalf("user forecasts len = %d, want 1", len(after.UserForecasts))
 	}
 }
+
+func TestForecastOperationsAPICreatesAndListsForecasts(t *testing.T) {
+	handler := testServer(t)
+
+	body := bytes.NewBufferString(`{"market_id":"mkt_001","agent":"api_agent","probability_yes":0.82,"reasoning":"API smoke forecast"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/forecasts", body)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("POST status = %d body=%s", rec.Code, rec.Body.String())
+	}
+	var created struct {
+		Forecast ForecastRecord `json:"forecast"`
+		Market   Market         `json:"market"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &created); err != nil {
+		t.Fatal(err)
+	}
+	if created.Forecast.MarketID != "mkt_001" || created.Forecast.MarketTitle == "" {
+		t.Fatalf("forecast market fields = %+v", created.Forecast)
+	}
+	if created.Forecast.Agent != "api_agent" || created.Forecast.ProbabilityYes != 0.82 || created.Forecast.Reasoning != "API smoke forecast" {
+		t.Fatalf("forecast fields = %+v", created.Forecast)
+	}
+	if created.Forecast.SubmittedAt.IsZero() {
+		t.Fatalf("submitted_at was not set: %+v", created.Forecast)
+	}
+	if created.Market.ID != "mkt_001" || len(created.Market.UserForecasts) != 1 {
+		t.Fatalf("updated market = %+v", created.Market)
+	}
+
+	records := getJSON[[]ForecastRecord](t, handler, "/api/forecasts?market_id=mkt_001&agent=api_agent")
+	if len(records) != 1 {
+		t.Fatalf("records len = %d, want 1", len(records))
+	}
+	if records[0].MarketID != "mkt_001" || records[0].Agent != "api_agent" || records[0].ProbabilityYes != 0.82 || records[0].Reasoning != "API smoke forecast" {
+		t.Fatalf("record = %+v", records[0])
+	}
+
+	marketRecords := getJSON[[]ForecastRecord](t, handler, "/api/markets/mkt_001/forecasts")
+	if len(marketRecords) != 1 {
+		t.Fatalf("market records len = %d, want 1", len(marketRecords))
+	}
+}
+
+func TestForecastOperationsAPIRequiresMarketID(t *testing.T) {
+	handler := testServer(t)
+
+	body := bytes.NewBufferString(`{"agent":"api_agent","probability_yes":0.82}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/forecasts", body)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("POST status = %d body=%s, want 400", rec.Code, rec.Body.String())
+	}
+}
+
+func TestForecastOperationsAPIRequiresProbability(t *testing.T) {
+	handler := testServer(t)
+
+	body := bytes.NewBufferString(`{"market_id":"mkt_001","agent":"api_agent"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/forecasts", body)
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("POST status = %d body=%s, want 400", rec.Code, rec.Body.String())
+	}
+}

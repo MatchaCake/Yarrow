@@ -9,8 +9,10 @@ import (
 )
 
 type forecastRequest struct {
-	Agent          string  `json:"agent"`
-	ProbabilityYes float64 `json:"probability_yes"`
+	MarketID       string   `json:"market_id"`
+	Agent          string   `json:"agent"`
+	ProbabilityYes *float64 `json:"probability_yes"`
+	Reasoning      string   `json:"reasoning"`
 }
 
 func NewRouter(store *ForecastStore) http.Handler {
@@ -42,6 +44,7 @@ func NewRouter(store *ForecastStore) http.Handler {
 		}
 		writeJSON(w, store.Markets())
 	})
+	mux.HandleFunc("/api/forecasts", forecastOperationsRoute(store))
 	mux.HandleFunc("/api/leaderboard", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			methodNotAllowed(w)
@@ -71,6 +74,34 @@ func agentRoute(store *ForecastStore) http.HandlerFunc {
 			return
 		}
 		writeJSON(w, history)
+	}
+}
+
+func forecastOperationsRoute(store *ForecastStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			records, err := store.Forecasts(
+				strings.TrimSpace(r.URL.Query().Get("market_id")),
+				strings.TrimSpace(r.URL.Query().Get("agent")),
+			)
+			if errors.Is(err, errMarketNotFound) {
+				http.NotFound(w, r)
+				return
+			}
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			writeJSON(w, records)
+		case http.MethodPost:
+			operation, ok := createForecast(w, r, store, "")
+			if ok {
+				writeJSON(w, operation)
+			}
+		default:
+			methodNotAllowed(w)
+		}
 	}
 }
 
@@ -113,6 +144,19 @@ func marketRoute(store *ForecastStore) http.HandlerFunc {
 			}
 			writeJSON(w, report)
 		case "forecasts":
+			if r.Method == http.MethodGet {
+				records, err := store.Forecasts(id, "")
+				if errors.Is(err, errMarketNotFound) {
+					http.NotFound(w, r)
+					return
+				}
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				writeJSON(w, records)
+				return
+			}
 			if r.Method != http.MethodPost {
 				methodNotAllowed(w)
 				return
@@ -125,35 +169,55 @@ func marketRoute(store *ForecastStore) http.HandlerFunc {
 }
 
 func handlePostForecast(w http.ResponseWriter, r *http.Request, store *ForecastStore, id string) {
+	operation, ok := createForecast(w, r, store, id)
+	if ok {
+		writeJSON(w, operation.Market)
+	}
+}
+
+func createForecast(w http.ResponseWriter, r *http.Request, store *ForecastStore, routeMarketID string) (ForecastOperation, bool) {
 	defer r.Body.Close()
 	var payload forecastRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
-		return
+		return ForecastOperation{}, false
+	}
+	marketID := strings.TrimSpace(routeMarketID)
+	if marketID == "" {
+		marketID = strings.TrimSpace(payload.MarketID)
+	}
+	if marketID == "" {
+		http.Error(w, "market_id is required", http.StatusBadRequest)
+		return ForecastOperation{}, false
 	}
 	payload.Agent = strings.TrimSpace(payload.Agent)
 	if payload.Agent == "" {
 		http.Error(w, "agent is required", http.StatusBadRequest)
-		return
+		return ForecastOperation{}, false
 	}
-	if payload.ProbabilityYes < 0 || payload.ProbabilityYes > 1 {
+	if payload.ProbabilityYes == nil {
+		http.Error(w, "probability_yes is required", http.StatusBadRequest)
+		return ForecastOperation{}, false
+	}
+	if *payload.ProbabilityYes < 0 || *payload.ProbabilityYes > 1 {
 		http.Error(w, "probability_yes must be between 0 and 1", http.StatusBadRequest)
-		return
+		return ForecastOperation{}, false
 	}
-	updated, err := store.AddForecast(id, Forecast{
+	operation, err := store.SubmitForecast(marketID, Forecast{
 		Agent:          payload.Agent,
-		ProbabilityYes: payload.ProbabilityYes,
+		ProbabilityYes: *payload.ProbabilityYes,
+		Reasoning:      strings.TrimSpace(payload.Reasoning),
 		SubmittedAt:    time.Now().UTC(),
 	})
 	if errors.Is(err, errMarketNotFound) {
 		http.NotFound(w, r)
-		return
+		return ForecastOperation{}, false
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return ForecastOperation{}, false
 	}
-	writeJSON(w, updated)
+	return operation, true
 }
 
 func writeJSON(w http.ResponseWriter, value any) {

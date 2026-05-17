@@ -556,18 +556,19 @@
       const id = form.dataset.form;
       const submit = form.querySelector('button[type="submit"]');
       const payload = {
+        market_id: id,
         agent: form.agent.value,
         probability_yes: Number(form.probability_yes.value)
       };
       submit.disabled = true;
       setStatus('submitting');
       try {
-        const updated = await requestJSON(`/api/markets/${id}/forecasts`, {
+        const operation = await requestJSON('/api/forecasts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        applyUpdatedMarket(updated);
+        applyUpdatedMarket(operation.market);
         try {
           state.leaderboard = await requestJSON('/api/leaderboard');
           renderLeaderboard();
@@ -688,6 +689,10 @@
       if (method === 'GET' && path === '/api/agents') return clone(store.agents);
       if (method === 'GET' && path === '/api/markets') return localMarkets();
       if (method === 'GET' && path === '/api/leaderboard') return localLeaderboard();
+      if (path === '/api/forecasts') {
+        if (method === 'GET') return localForecasts();
+        if (method === 'POST') return localSubmitForecast(JSON.parse(options.body || '{}'));
+      }
 
       const agentMatch = path.match(/^\/api\/agents\/([^/]+)\/history$/);
       if (method === 'GET' && agentMatch) return localAgentHistory(agentMatch[1]);
@@ -700,21 +705,56 @@
       if (method === 'GET' && action === 'report') return localReport(id);
       if (method === 'POST' && action === 'forecasts') {
         const payload = JSON.parse(options.body || '{}');
-        payload.agent = String(payload.agent || '').trim();
-        if (!payload.agent) throw new Error('agent is required');
-        if (payload.probability_yes < 0 || payload.probability_yes > 1) {
-          throw new Error('probability_yes must be between 0 and 1');
-        }
-        const raw = store.markets.find(market => market.id === id);
-        if (!raw) throw new Error(`${path} 404`);
-        raw.user_forecasts.push({
-          agent: payload.agent,
-          probability_yes: Number(payload.probability_yes),
-          submitted_at: new Date().toISOString()
-        });
-        return enrichMarket(raw);
+        payload.market_id = id;
+        return localSubmitForecast(payload).market;
       }
       throw new Error(`${path} unavailable in local demo mode`);
+    }
+
+    function localSubmitForecast(payload) {
+      payload.market_id = String(payload.market_id || '').trim();
+      payload.reasoning = String(payload.reasoning || '').trim();
+      payload.agent = String(payload.agent || '').trim();
+      if (!payload.market_id) throw new Error('market_id is required');
+      if (!payload.agent) throw new Error('agent is required');
+      if (payload.probability_yes === undefined || payload.probability_yes === null) {
+        throw new Error('probability_yes is required');
+      }
+      if (payload.probability_yes < 0 || payload.probability_yes > 1) {
+        throw new Error('probability_yes must be between 0 and 1');
+      }
+      const raw = ensureLocalStore().markets.find(market => market.id === payload.market_id);
+      if (!raw) throw new Error(`/api/forecasts 404`);
+      const forecast = {
+        agent: payload.agent,
+        probability_yes: Number(payload.probability_yes),
+        reasoning: payload.reasoning,
+        submitted_at: new Date().toISOString()
+      };
+      raw.user_forecasts.push(forecast);
+      const market = enrichMarket(raw);
+      return {
+        forecast: localForecastRecord(market, forecast),
+        market
+      };
+    }
+
+    function localForecasts() {
+      return ensureLocalStore().markets
+        .slice()
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .flatMap(market => (market.user_forecasts || []).map(forecast => localForecastRecord(market, forecast)));
+    }
+
+    function localForecastRecord(market, forecast) {
+      return {
+        market_id: market.id,
+        market_title: market.title,
+        agent: forecast.agent,
+        probability_yes: forecast.probability_yes,
+        reasoning: forecast.reasoning || '',
+        submitted_at: forecast.submitted_at
+      };
     }
 
     function localAgentHistory(id) {
