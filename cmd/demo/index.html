@@ -84,6 +84,9 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
+    .status.error {
+      color: var(--red);
+    }
     main {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 310px;
@@ -345,7 +348,7 @@
     <div class="modal-dialog">
       <div class="modal-head">
         <h3 id="modal-title"></h3>
-        <button class="close" id="modal-close" aria-label="Close">x</button>
+        <button type="button" class="close" id="modal-close" aria-label="Close">x</button>
       </div>
       <div id="modal-body"></div>
     </div>
@@ -374,13 +377,16 @@
     }
 
     async function fetchJSON(path, options) {
+      if (window.location.protocol === 'file:') {
+        throw new Error('This demo must be opened through the Go server: run `go run ./cmd/demo` and visit http://localhost:8080.');
+      }
       const res = await fetch(path, options);
       if (!res.ok) throw new Error(`${path} ${res.status}`);
       return res.json();
     }
 
     async function loadAll() {
-      statusEl.textContent = 'loading';
+      setStatus('loading');
       const [markets, leaderboard, agents] = await Promise.all([
         fetchJSON('/api/markets'),
         fetchJSON('/api/leaderboard'),
@@ -390,7 +396,7 @@
       state.leaderboard = leaderboard;
       state.agents = agents;
       render();
-      statusEl.textContent = 'live';
+      setStatus('live');
     }
 
     function render() {
@@ -413,7 +419,7 @@
             <div><span class="metric-label">Polymarket</span><span class="metric-value">${pct(market.polymarket_yes)}</span></div>
             <div><span class="metric-label">Yarrow</span><span class="metric-value yarrow-value">${pct(market.community_prediction)}</span></div>
             <div><span class="metric-label">Edge</span><span class="metric-value edge-value ${edgeClass(market.divergence)}">${signedPct(market.divergence)}</span></div>
-            <button data-view="${market.id}">View &gt;</button>
+            <button type="button" data-view="${market.id}">View &gt;</button>
           </div>
           ${resolved ? '' : forecastFormHTML(market)}
         `;
@@ -423,7 +429,7 @@
 
     function forecastFormHTML(market) {
       return `
-        <button class="stance-toggle" data-toggle="${market.id}">Add your stance</button>
+        <button type="button" class="stance-toggle" data-toggle="${market.id}">Add your stance</button>
         <form class="stance-form" data-form="${market.id}">
           <input type="text" name="agent" value="stage_demo" aria-label="Agent name">
           <label class="small">Probability <span class="slider-value">65%</span><input type="range" name="probability_yes" min="0" max="1" step="0.01" value="0.65"></label>
@@ -449,12 +455,21 @@
     }
 
     marketsEl.addEventListener('click', async (event) => {
-      const viewId = event.target.dataset.view;
-      const toggleId = event.target.dataset.toggle;
-      if (viewId) openReport(viewId);
+      const target = event.target instanceof Element ? event.target : null;
+      const viewButton = target?.closest('[data-view]');
+      const toggleButton = target?.closest('[data-toggle]');
+      const viewId = viewButton?.dataset.view;
+      const toggleId = toggleButton?.dataset.toggle;
+      if (viewId) {
+        try {
+          await openReport(viewId);
+        } catch (err) {
+          setStatus(`report failed: ${err.message}`, true);
+        }
+      }
       if (toggleId) {
         const form = marketsEl.querySelector(`[data-form="${toggleId}"]`);
-        form.classList.toggle('open');
+        if (form) form.classList.toggle('open');
       }
     });
 
@@ -468,19 +483,28 @@
       event.preventDefault();
       const form = event.target;
       const id = form.dataset.form;
+      const submit = form.querySelector('button[type="submit"]');
       const payload = {
         agent: form.agent.value,
         probability_yes: Number(form.probability_yes.value)
       };
-      const updated = await fetchJSON(`/api/markets/${id}/forecasts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      applyUpdatedMarket(updated);
-      state.leaderboard = await fetchJSON('/api/leaderboard');
-      renderLeaderboard();
-      await loadAll();
+      submit.disabled = true;
+      setStatus('submitting');
+      try {
+        const updated = await fetchJSON(`/api/markets/${id}/forecasts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        applyUpdatedMarket(updated);
+        state.leaderboard = await fetchJSON('/api/leaderboard');
+        renderLeaderboard();
+        await loadAll();
+      } catch (err) {
+        setStatus(`submit failed: ${err.message}`, true);
+      } finally {
+        submit.disabled = false;
+      }
     });
 
     function applyUpdatedMarket(updated) {
@@ -511,7 +535,7 @@
         `).join('')}
         <h2 style="margin-top:16px;">Key risk factors</h2>
         <ul class="risk-list">${report.market.risk_factors.map(risk => `<li>${escapeHTML(risk)}</li>`).join('')}</ul>
-        <div class="unlock-row"><span>Full report ($5 - Pro Agents only)</span><button disabled>Unlock</button></div>
+        <div class="unlock-row"><span>Full report ($5 - Pro Agents only)</span><button type="button" disabled>Unlock</button></div>
       `;
       modal.classList.add('open');
     }
@@ -537,9 +561,15 @@
         .replaceAll("'", '&#039;');
     }
 
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle('error', isError);
+    }
+
     loadAll().catch((err) => {
-      statusEl.textContent = 'error';
+      setStatus('error', true);
       marketsEl.innerHTML = `<p class="small">${escapeHTML(err.message)}</p>`;
+      leaderboardEl.innerHTML = `<p class="small">API unavailable.</p>`;
     });
   </script>
 </body>

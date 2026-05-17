@@ -47,6 +47,8 @@ Open http://localhost:8080.
 
 The page loads all 10 markets sorted by absolute divergence, shows the 5-agent leaderboard with two reference rows, opens a per-market analysis modal, and lets audience members submit an in-memory stance on open markets.
 
+Do not open `cmd/demo/index.html` directly from Finder or with a `file://` URL. The buttons call same-origin `/api/...` routes, so the Go server must be running.
+
 ## API
 
 | Method | Path |
