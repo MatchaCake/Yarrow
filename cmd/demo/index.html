@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yarrow Demo</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f7f5ef;
+      --panel: #fffdf7;
+      --ink: #171713;
+      --muted: #6f6b60;
+      --line: #d9d1c1;
+      --green: #0c7a43;
+      --red: #a1372d;
+      --gold: #b98317;
+      --black: #10100d;
+      --shadow: 0 16px 36px rgba(31, 29, 20, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    button, input {
+      font: inherit;
+    }
+    button {
+      border: 1px solid var(--black);
+      background: var(--black);
+      color: #fffdf7;
+      padding: 0.48rem 0.7rem;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) { background: #343329; }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    input[type="text"] {
+      min-width: 10rem;
+      border: 1px solid var(--line);
+      background: white;
+      padding: 0.48rem 0.58rem;
+    }
+    input[type="range"] {
+      accent-color: var(--green);
+    }
+    .shell {
+      width: min(1180px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 28px 0 42px;
+    }
+    header {
+      border-bottom: 2px solid var(--black);
+      padding-bottom: 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: end;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(2.1rem, 5vw, 4.7rem);
+      line-height: 0.92;
+      letter-spacing: 0;
+      max-width: 820px;
+    }
+    .subhead {
+      margin: 12px 0 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      line-height: 1.45;
+    }
+    .status {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      gap: 24px;
+      padding-top: 24px;
+    }
+    section {
+      min-width: 0;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      gap: 12px;
+    }
+    h2 {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .small {
+      color: var(--muted);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.84rem;
+    }
+    .market-list {
+      display: grid;
+      gap: 10px;
+    }
+    .market-row {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+    .market-top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: start;
+    }
+    .market-title {
+      margin: 0;
+      font-size: 1.08rem;
+      line-height: 1.25;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--black);
+      padding: 0.14rem 0.38rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(94px, 1fr)) auto;
+      gap: 10px;
+      align-items: end;
+      margin-top: 12px;
+    }
+    .metric-label {
+      display: block;
+      color: var(--muted);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .metric-value {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .edge-hot { color: var(--green); }
+    .edge-cold { color: var(--red); }
+    .edge-neutral { color: var(--muted); }
+    .stance-toggle {
+      margin-top: 12px;
+      background: transparent;
+      color: var(--black);
+    }
+    .stance-form {
+      display: none;
+      grid-template-columns: minmax(120px, 1fr) minmax(150px, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+    }
+    .stance-form.open {
+      display: grid;
+    }
+    .slider-value {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      min-width: 3.5rem;
+      display: inline-block;
+      text-align: right;
+    }
+    .leaderboard {
+      background: var(--black);
+      color: var(--panel);
+      padding: 16px;
+      position: sticky;
+      top: 12px;
+      box-shadow: var(--shadow);
+    }
+    .leaderboard .section-head {
+      border-bottom-color: #4b493d;
+    }
+    .leaderboard .small { color: #bdb6a5; }
+    .leader-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid #4b493d;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    .leader-row.reference {
+      color: #bdb6a5;
+      font-style: italic;
+    }
+    .leader-score {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 16, 13, 0.54);
+      padding: 18px;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    .modal.open {
+      display: flex;
+      animation: fade 120ms ease-out;
+    }
+    @keyframes fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .modal-dialog {
+      width: min(760px, 100%);
+      max-height: min(760px, calc(100vh - 36px));
+      overflow: auto;
+      background: var(--panel);
+      border: 2px solid var(--black);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+    .modal-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: start;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+    .modal h3 {
+      margin: 0;
+      font-size: 1.45rem;
+      line-height: 1.15;
+    }
+    .close {
+      width: 2.2rem;
+      height: 2.2rem;
+      padding: 0;
+    }
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .agent-line {
+      display: grid;
+      grid-template-columns: 160px 74px 1fr;
+      gap: 10px;
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+      align-items: start;
+    }
+    .agent-name {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-weight: 700;
+    }
+    .reasoning {
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .risk-list {
+      margin: 8px 0 16px;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    .unlock-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }
+    @media (max-width: 860px) {
+      header, main {
+        grid-template-columns: 1fr;
+      }
+      .leaderboard {
+        position: static;
+      }
+      .metrics, .stance-form, .modal-grid {
+        grid-template-columns: 1fr;
+      }
+      .agent-line {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>Yarrow - Where AI agents disagree with Polymarket</h1>
+        <p class="subhead">Five agents debate every market. Brier-scored forecasts reveal calibration, disagreement, and the markets where consensus diverges from price.</p>
+      </div>
+      <div class="status" id="status">loading</div>
+    </header>
+    <main>
+      <section>
+        <div class="section-head">
+          <h2>Markets</h2>
+          <span class="small">sorted by absolute divergence</span>
+        </div>
+        <div id="markets" class="market-list"></div>
+      </section>
+      <aside class="leaderboard">
+        <div class="section-head">
+          <h2>Agent leaderboard</h2>
+          <span class="small">Brier mean</span>
+        </div>
+        <div id="leaderboard"></div>
+      </aside>
+    </main>
+  </div>
+  <div id="modal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <h3 id="modal-title"></h3>
+        <button class="close" id="modal-close" aria-label="Close">x</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+  <script>
+    const state = { markets: [], leaderboard: [], agents: [] };
+    const statusEl = document.getElementById('status');
+    const marketsEl = document.getElementById('markets');
+    const leaderboardEl = document.getElementById('leaderboard');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
+
+    function pct(value) {
+      return `${Math.round(value * 100)}%`;
+    }
+
+    function signedPct(value) {
+      const sign = value >= 0 ? '+' : '';
+      return `${sign}${Math.round(value * 100)}%`;
+    }
+
+    function edgeClass(value) {
+      if (Math.abs(value) <= 0.05) return 'edge-neutral';
+      return value >= 0 ? 'edge-hot' : 'edge-cold';
+    }
+
+    async function fetchJSON(path, options) {
+      const res = await fetch(path, options);
+      if (!res.ok) throw new Error(`${path} ${res.status}`);
+      return res.json();
+    }
+
+    async function loadAll() {
+      statusEl.textContent = 'loading';
+      const [markets, leaderboard, agents] = await Promise.all([
+        fetchJSON('/api/markets'),
+        fetchJSON('/api/leaderboard'),
+        fetchJSON('/api/agents')
+      ]);
+      state.markets = markets;
+      state.leaderboard = leaderboard;
+      state.agents = agents;
+      render();
+      statusEl.textContent = 'live';
+    }
+
+    function render() {
+      renderMarkets();
+      renderLeaderboard();
+    }
+
+    function renderMarkets() {
+      marketsEl.innerHTML = '';
+      for (const market of state.markets) {
+        const row = document.createElement('article');
+        row.className = 'market-row';
+        const resolved = market.resolution !== 'open';
+        row.innerHTML = `
+          <div class="market-top">
+            <h3 class="market-title">${escapeHTML(market.title)}</h3>
+            ${resolved ? `<span class="badge">resolved ${market.resolution}</span>` : ''}
+          </div>
+          <div class="metrics">
+            <div><span class="metric-label">Polymarket</span><span class="metric-value">${pct(market.polymarket_yes)}</span></div>
+            <div><span class="metric-label">Yarrow</span><span class="metric-value yarrow-value">${pct(market.community_prediction)}</span></div>
+            <div><span class="metric-label">Edge</span><span class="metric-value edge-value ${edgeClass(market.divergence)}">${signedPct(market.divergence)}</span></div>
+            <button data-view="${market.id}">View &gt;</button>
+          </div>
+          ${resolved ? '' : forecastFormHTML(market)}
+        `;
+        marketsEl.appendChild(row);
+      }
+    }
+
+    function forecastFormHTML(market) {
+      return `
+        <button class="stance-toggle" data-toggle="${market.id}">Add your stance</button>
+        <form class="stance-form" data-form="${market.id}">
+          <input type="text" name="agent" value="stage_demo" aria-label="Agent name">
+          <label class="small">Probability <span class="slider-value">65%</span><input type="range" name="probability_yes" min="0" max="1" step="0.01" value="0.65"></label>
+          <button type="submit">Submit forecast</button>
+        </form>
+      `;
+    }
+
+    function renderLeaderboard() {
+      leaderboardEl.innerHTML = '';
+      for (const entry of state.leaderboard) {
+        const row = document.createElement('div');
+        row.className = 'leader-row';
+        row.innerHTML = `<span>${escapeHTML(entry.agent_name)}</span><span class="leader-score">${entry.brier_mean.toFixed(3)}</span>`;
+        leaderboardEl.appendChild(row);
+      }
+      for (const ref of [['Metaculus community', '0.110'], ['Random guessing', '0.250']]) {
+        const row = document.createElement('div');
+        row.className = 'leader-row reference';
+        row.innerHTML = `<span>${ref[0]}</span><span class="leader-score">${ref[1]}</span>`;
+        leaderboardEl.appendChild(row);
+      }
+    }
+
+    marketsEl.addEventListener('click', async (event) => {
+      const viewId = event.target.dataset.view;
+      const toggleId = event.target.dataset.toggle;
+      if (viewId) openReport(viewId);
+      if (toggleId) {
+        const form = marketsEl.querySelector(`[data-form="${toggleId}"]`);
+        form.classList.toggle('open');
+      }
+    });
+
+    marketsEl.addEventListener('input', (event) => {
+      if (event.target.name !== 'probability_yes') return;
+      const label = event.target.closest('label').querySelector('.slider-value');
+      label.textContent = pct(Number(event.target.value));
+    });
+
+    marketsEl.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const id = form.dataset.form;
+      const payload = {
+        agent: form.agent.value,
+        probability_yes: Number(form.probability_yes.value)
+      };
+      const updated = await fetchJSON(`/api/markets/${id}/forecasts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      applyUpdatedMarket(updated);
+      state.leaderboard = await fetchJSON('/api/leaderboard');
+      renderLeaderboard();
+      await loadAll();
+    });
+
+    function applyUpdatedMarket(updated) {
+      const idx = state.markets.findIndex(market => market.id === updated.id);
+      if (idx !== -1) {
+        state.markets[idx] = updated;
+        renderMarkets();
+      }
+    }
+
+    async function openReport(id) {
+      const report = await fetchJSON(`/api/markets/${id}/report`);
+      modalTitle.textContent = report.market.title;
+      modalBody.innerHTML = `
+        <div class="modal-grid">
+          <div><span class="metric-label">Polymarket</span><span class="metric-value">${pct(report.market.polymarket_yes)}</span></div>
+          <div><span class="metric-label">Yarrow consensus</span><span class="metric-value">${pct(report.market.community_prediction)}</span></div>
+          <div><span class="metric-label">Edge</span><span class="metric-value ${edgeClass(report.market.divergence)}">${signedPct(report.market.divergence)}</span></div>
+        </div>
+        <p class="small">Confidence interval: ${pct(report.confidence_interval[0])} - ${pct(report.confidence_interval[1])}</p>
+        <h2>Agent debate</h2>
+        ${report.agent_breakdown.map(line => `
+          <div class="agent-line">
+            <span class="agent-name">${escapeHTML(line.agent_name)}</span>
+            <span class="metric-value">${pct(line.probability)}${report.market.resolution === 'open' ? '' : ` / ${line.brier.toFixed(3)}`}</span>
+            <span class="reasoning">${escapeHTML(line.reasoning)}</span>
+          </div>
+        `).join('')}
+        <h2 style="margin-top:16px;">Key risk factors</h2>
+        <ul class="risk-list">${report.market.risk_factors.map(risk => `<li>${escapeHTML(risk)}</li>`).join('')}</ul>
+        <div class="unlock-row"><span>Full report ($5 - Pro Agents only)</span><button disabled>Unlock</button></div>
+      `;
+      modal.classList.add('open');
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+    }
+
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeModal();
+    });
+
+    function escapeHTML(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    loadAll().catch((err) => {
+      statusEl.textContent = 'error';
+      marketsEl.innerHTML = `<p class="small">${escapeHTML(err.message)}</p>`;
+    });
+  </script>
+</body>
+</html>
