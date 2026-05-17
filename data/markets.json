@@ -1,0 +1,192 @@
+[
+  {
+    "id": "mkt_001",
+    "title": "Will Bitcoin close above $100,000 on March 1, 2026?",
+    "slug": "btc-100k-mar-2026",
+    "polymarket_yes": 0.42,
+    "resolution": "open",
+    "stances": {
+      "momentum_quant":    { "probability": 0.55, "reasoning": "30-day moving average crossed bullish; spot ETF inflows accelerating week-over-week." },
+      "contrarian":        { "probability": 0.38, "reasoning": "Crowded retail long; positioning data shows late-cycle marginal buyers." },
+      "macro_hawk":        { "probability": 0.48, "reasoning": "Fed stance and DXY trajectory dominate crypto in Q1; macro neutral-bearish." },
+      "tech_fundamentals": { "probability": 0.52, "reasoning": "Spot ETF aggregate AUM > $80B; post-halving supply schedule tight." },
+      "political_analyst": { "probability": 0.45, "reasoning": "Pro-asset regulatory tone; SAB-122 reversal supportive of institutional flows." }
+    },
+    "risk_factors": [
+      "BTC ETF outflows accelerate on a macro liquidity shock",
+      "Major exchange security incident or surprise enforcement action",
+      "Halving-cycle thesis fails to convert to price in the available window"
+    ]
+  },
+  {
+    "id": "mkt_002",
+    "title": "Will the Fed cut rates at the next FOMC meeting?",
+    "slug": "fed-cut-next-fomc",
+    "polymarket_yes": 0.31,
+    "resolution": "open",
+    "stances": {
+      "momentum_quant":    { "probability": 0.28, "reasoning": "FOMC dot plot trending hawkish; rates futures pricing < 25bps cut." },
+      "contrarian":        { "probability": 0.40, "reasoning": "Market underpricing dovish surprise; Treasury rhetoric softening." },
+      "macro_hawk":        { "probability": 0.35, "reasoning": "Core PCE sticky at 2.8%; FOMC consensus unlikely to move without slack data." },
+      "tech_fundamentals": { "probability": 0.25, "reasoning": "Bond market implied probability tracks ~20-22% — anchor to that signal." },
+      "political_analyst": { "probability": 0.30, "reasoning": "Political pressure on Fed to cut but Powell remains data-dependent." }
+    },
+    "risk_factors": [
+      "Core inflation reading surprises hot before the meeting",
+      "Labor market remains tight in next NFP print",
+      "Geopolitical event triggers risk-off and forces dovish pivot"
+    ]
+  },
+  {
+    "id": "mkt_003",
+    "title": "Will SpaceX Starship V2 complete an orbital flight in Q1 2026?",
+    "slug": "starship-v2-q1-2026",
+    "polymarket_yes": 0.68,
+    "resolution": "yes",
+    "stances": {
+      "momentum_quant":    { "probability": 0.72, "reasoning": "SpaceX hit cadence targets last three launches; preflight checks completed." },
+      "contrarian":        { "probability": 0.55, "reasoning": "Cadence has slipped twice this year; market overconfident in linear extrapolation." },
+      "macro_hawk":        { "probability": 0.65, "reasoning": "Macro irrelevant; pure engineering execution question." },
+      "tech_fundamentals": { "probability": 0.75, "reasoning": "13/13 recent static fire tests successful; orbital readiness >90% per filings." },
+      "political_analyst": { "probability": 0.65, "reasoning": "FAA license cycle improving but still gated; political risk minimal." }
+    },
+    "risk_factors": [
+      "Static-fire failure during final integration",
+      "FAA license amendment delay",
+      "Weather/range scrub pushes attempt past Q1 cutoff"
+    ]
+  },
+  {
+    "id": "mkt_004",
+    "title": "Will OpenAI release GPT-5 before July 1, 2026?",
+    "slug": "gpt5-h1-2026",
+    "polymarket_yes": 0.55,
+    "resolution": "open",
+    "stances": {
+      "momentum_quant":    { "probability": 0.62, "reasoning": "OpenAI announcement cadence accelerating; competitive pressure peaking." },
+      "contrarian":        { "probability": 0.40, "reasoning": "OpenAI release timing slipped 3 of last 5; July deadline aggressive." },
+      "macro_hawk":        { "probability": 0.50, "reasoning": "Macro neutral; AI capex pressure cuts both ways on release timing." },
+      "tech_fundamentals": { "probability": 0.68, "reasoning": "Compute scale-up confirmed via H100 orders; release window aligns with cadence." },
+      "political_analyst": { "probability": 0.55, "reasoning": "EU AI Act compliance may delay global launch; US-only ship more likely." }
+    },
+    "risk_factors": [
+      "Compute supply constraints push training timeline",
+      "Competitive launch from Anthropic or Google shifts release strategy",
+      "Safety/eval pipeline introduces release delay"
+    ]
+  },
+  {
+    "id": "mkt_005",
+    "title": "Will the S&P 500 close above 6,000 by end of Q2 2026?",
+    "slug": "sp500-6000-q2-2026",
+    "polymarket_yes": 0.73,
+    "resolution": "open",
+    "stances": {
+      "momentum_quant":    { "probability": 0.78, "reasoning": "MACD bullish crossover on weekly; realized volatility compressed." },
+      "contrarian":        { "probability": 0.60, "reasoning": "Valuations stretched; concentration risk in seven names." },
+      "macro_hawk":        { "probability": 0.70, "reasoning": "Liquidity supportive; risk-on regime intact through Q2." },
+      "tech_fundamentals": { "probability": 0.72, "reasoning": "EPS revisions positive; magnificent-7 beat consensus 88% last cycle." },
+      "political_analyst": { "probability": 0.70, "reasoning": "Election-year volatility but median path remains supportive." }
+    },
+    "risk_factors": [
+      "Recession signal triggers 10%+ correction",
+      "AI capex bubble repricing event",
+      "Geopolitical shock — Taiwan / Iran / Russia escalation"
+    ]
+  },
+  {
+    "id": "mkt_006",
+    "title": "Will Ethereum ETF inflows exceed Bitcoin ETF inflows for May 2026?",
+    "slug": "eth-vs-btc-etf-may-2026",
+    "polymarket_yes": 0.22,
+    "resolution": "no",
+    "stances": {
+      "momentum_quant":    { "probability": 0.15, "reasoning": "BTC ETF momentum dominated through Q2; ETH inflows stagnant." },
+      "contrarian":        { "probability": 0.32, "reasoning": "ETH staking-rewards narrative undervalued; flow asymmetry stretched." },
+      "macro_hawk":        { "probability": 0.18, "reasoning": "Risk-off pulls capital to BTC ETF; ETH treated as risk asset." },
+      "tech_fundamentals": { "probability": 0.20, "reasoning": "ETH ETF approved later, smaller institutional inflow channel." },
+      "political_analyst": { "probability": 0.25, "reasoning": "SEC ETH-staking guidance still pending; regulatory drag on inflows." }
+    },
+    "risk_factors": [
+      "Surprise SEC approval of ETH staking-yield ETF product",
+      "BTC ETF outflows for unrelated macro reasons",
+      "Major institutional allocator reweights from BTC to ETH"
+    ]
+  },
+  {
+    "id": "mkt_007",
+    "title": "Will a major US presidential candidate publicly use an AI agent during a debate before 2027?",
+    "slug": "ai-agent-us-debate-2027",
+    "polymarket_yes": 0.18,
+    "resolution": "open",
+    "stances": {
+      "momentum_quant":    { "probability": 0.22, "reasoning": "Adoption curve trending up but political cycle timing matters more than trend." },
+      "contrarian":        { "probability": 0.30, "reasoning": "Underpriced tail; AI use in political messaging already trending mainstream." },
+      "macro_hawk":        { "probability": 0.15, "reasoning": "Regulatory headwinds slow institutional adoption pre-election." },
+      "tech_fundamentals": { "probability": 0.18, "reasoning": "Adoption beta unlocked but politicians lag tech by 18-24 months." },
+      "political_analyst": { "probability": 0.35, "reasoning": "Some candidates already using AI for messaging; debate format use plausible." }
+    },
+    "risk_factors": [
+      "Campaign legal advisors discourage public AI use for liability reasons",
+      "AI scandal pre-debate creates political cost for early adopters",
+      "Debate-host format excludes electronic aids"
+    ]
+  },
+  {
+    "id": "mkt_008",
+    "title": "Will Nvidia stock close above $1,200 on the next earnings day?",
+    "slug": "nvda-1200-next-er",
+    "polymarket_yes": 0.47,
+    "resolution": "open",
+    "stances": {
+      "momentum_quant":    { "probability": 0.52, "reasoning": "Earnings momentum into print; sentiment skew positive on options chain." },
+      "contrarian":        { "probability": 0.42, "reasoning": "Crowded long; consensus too clean for surprise asymmetry." },
+      "macro_hawk":        { "probability": 0.55, "reasoning": "AI capex cycle and dollar weakness combine bullish for AI-exposed names." },
+      "tech_fundamentals": { "probability": 0.58, "reasoning": "Data-center revenue guidance implies 40% YoY beat probability." },
+      "political_analyst": { "probability": 0.48, "reasoning": "Export-controls headwind to China unresolved; near-term overhang." }
+    },
+    "risk_factors": [
+      "China demand softens further on new export controls",
+      "AI capex investors pause for digestion phase",
+      "Pre-earnings de-risking by macro funds"
+    ]
+  },
+  {
+    "id": "mkt_009",
+    "title": "Will Apple announce a Vision Pro 2 before WWDC 2026?",
+    "slug": "vision-pro-2-pre-wwdc-2026",
+    "polymarket_yes": 0.12,
+    "resolution": "no",
+    "stances": {
+      "momentum_quant":    { "probability": 0.08, "reasoning": "Apple announcement cycle points to WWDC reveal, not pre-conference drop." },
+      "contrarian":        { "probability": 0.18, "reasoning": "Pre-WWDC announcements have surprised in past cycles." },
+      "macro_hawk":        { "probability": 0.10, "reasoning": "Consumer spending soft; Apple unlikely to push pricey launch in Q1-Q2." },
+      "tech_fundamentals": { "probability": 0.08, "reasoning": "R&D filings show iteration not a new SKU before fall release window." },
+      "political_analyst": { "probability": 0.12, "reasoning": "No regulatory drivers; pure product timing question." }
+    },
+    "risk_factors": [
+      "Surprise hardware refresh aligned with retail launch window",
+      "Competitive pressure from Meta forces accelerated cadence",
+      "Component supply readiness pulls forward announcement"
+    ]
+  },
+  {
+    "id": "mkt_010",
+    "title": "Will Polymarket exceed $30B in 2026 settled volume?",
+    "slug": "polymarket-30b-2026",
+    "polymarket_yes": 0.55,
+    "resolution": "open",
+    "stances": {
+      "momentum_quant":    { "probability": 0.62, "reasoning": "Run-rate from H2 2025 already implies $30B+ annualized." },
+      "contrarian":        { "probability": 0.45, "reasoning": "Growth assumptions extrapolated linearly; cycle may have peaked with 2024 election." },
+      "macro_hawk":        { "probability": 0.65, "reasoning": "Election year drives volume; macro tailwind for risk assets." },
+      "tech_fundamentals": { "probability": 0.70, "reasoning": "Trailing 6-month volume already $14B+; clear path to $30B with normal seasonality." },
+      "political_analyst": { "probability": 0.58, "reasoning": "Regulatory tailwind under current admin; CFTC light-touch approach." }
+    },
+    "risk_factors": [
+      "Enforcement action against US prediction-market participation",
+      "Competing platform (Kalshi, others) fragments market share",
+      "2026 mid-cycle drop in political-event volume"
+    ]
+  }
+]

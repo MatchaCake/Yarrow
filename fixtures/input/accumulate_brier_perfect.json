@@ -1,0 +1,8 @@
+{
+  "op": "accumulate_brier",
+  "scores": [
+    0.0,
+    0.0,
+    0.0
+  ]
+}

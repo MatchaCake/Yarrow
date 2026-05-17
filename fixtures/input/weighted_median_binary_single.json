@@ -1,0 +1,9 @@
+{
+  "op": "weighted_median_binary",
+  "probabilities": [
+    0.7
+  ],
+  "weights": [
+    1.0
+  ]
+}

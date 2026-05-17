@@ -1,0 +1,5 @@
+{
+  "op": "baseline_for_numeric_question",
+  "open_lower": false,
+  "open_upper": true
+}

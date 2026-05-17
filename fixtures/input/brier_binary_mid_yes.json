@@ -1,0 +1,5 @@
+{
+  "op": "brier_binary",
+  "probability_yes": 0.5,
+  "resolved_yes": true
+}

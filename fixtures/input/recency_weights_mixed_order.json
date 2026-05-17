@@ -1,0 +1,8 @@
+{
+  "op": "recency_weights",
+  "start_offsets": [
+    30,
+    10,
+    20
+  ]
+}
