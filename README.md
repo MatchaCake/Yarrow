@@ -55,6 +55,7 @@ Opening `cmd/demo/index.html` directly, or hosting it as static HTML without the
 | --- | --- |
 | `GET` | `/` |
 | `GET` | `/api/agents` |
+| `GET` | `/api/agents/{id}/history` |
 | `GET` | `/api/markets` |
 | `GET` | `/api/markets/{id}` |
 | `GET` | `/api/markets/{id}/report` |

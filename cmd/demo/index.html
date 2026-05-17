@@ -214,6 +214,19 @@
       border-bottom: 1px solid #4b493d;
       font-family: ui-sans-serif, system-ui, sans-serif;
     }
+    .leader-button {
+      width: 100%;
+      background: transparent;
+      color: var(--panel);
+      border: 0;
+      text-align: left;
+    }
+    .leader-button:hover:not(:disabled),
+    .leader-button:focus-visible {
+      background: #26251f;
+      outline: 1px solid #bdb6a5;
+      outline-offset: -1px;
+    }
     .leader-row.reference {
       color: #bdb6a5;
       font-style: italic;
@@ -284,6 +297,31 @@
       font-family: ui-sans-serif, system-ui, sans-serif;
       font-weight: 700;
     }
+    .history-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 90px 78px;
+      gap: 12px;
+      padding: 12px 0;
+      border-top: 1px solid var(--line);
+      align-items: start;
+    }
+    .history-title {
+      margin: 0 0 4px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .result-pill {
+      display: inline-flex;
+      justify-content: center;
+      border: 1px solid var(--line);
+      padding: 0.18rem 0.42rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+    .result-yes { color: var(--green); border-color: var(--green); }
+    .result-no { color: var(--red); border-color: var(--red); }
+    .result-open { color: var(--muted); }
     .reasoning {
       color: var(--muted);
       line-height: 1.35;
@@ -312,7 +350,7 @@
       .metrics, .stance-form, .modal-grid {
         grid-template-columns: 1fr;
       }
-      .agent-line {
+      .agent-line, .history-row {
         grid-template-columns: 1fr;
       }
     }
@@ -459,8 +497,11 @@
     function renderLeaderboard() {
       leaderboardEl.innerHTML = '';
       for (const entry of state.leaderboard) {
-        const row = document.createElement('div');
-        row.className = 'leader-row';
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'leader-row leader-button';
+        row.dataset.agent = entry.agent_id;
+        row.setAttribute('aria-label', `View prediction history for ${entry.agent_name}`);
         row.innerHTML = `<span>${escapeHTML(entry.agent_name)}</span><span class="leader-score">${entry.brier_mean.toFixed(3)}</span>`;
         leaderboardEl.appendChild(row);
       }
@@ -471,6 +512,18 @@
         leaderboardEl.appendChild(row);
       }
     }
+
+    leaderboardEl.addEventListener('click', async (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const button = target ? target.closest('[data-agent]') : null;
+      const agentId = button ? button.dataset.agent : '';
+      if (!agentId) return;
+      try {
+        await openAgentHistory(agentId);
+      } catch (err) {
+        setStatus(`agent history failed: ${err.message}`, true);
+      }
+    });
 
     marketsEl.addEventListener('click', async (event) => {
       const target = event.target instanceof Element ? event.target : null;
@@ -562,6 +615,41 @@
       modal.classList.add('open');
     }
 
+    async function openAgentHistory(id) {
+      const history = await requestJSON(`/api/agents/${id}/history`);
+      const resolved = history.predictions.filter(prediction => prediction.resolved);
+      const brierMean = resolved.length
+        ? resolved.reduce((sum, prediction) => sum + prediction.brier, 0) / resolved.length
+        : 0;
+      modalTitle.textContent = `${history.agent.name} prediction history`;
+      modalBody.innerHTML = `
+        <p class="small">${escapeHTML(history.agent.persona)}</p>
+        <div class="modal-grid">
+          <div><span class="metric-label">Markets</span><span class="metric-value">${history.predictions.length}</span></div>
+          <div><span class="metric-label">Resolved</span><span class="metric-value">${resolved.length}</span></div>
+          <div><span class="metric-label">Brier mean</span><span class="metric-value">${brierMean.toFixed(3)}</span></div>
+        </div>
+        <h2>Prediction history</h2>
+        ${history.predictions.map(prediction => `
+          <div class="history-row">
+            <div>
+              <p class="history-title">${escapeHTML(prediction.market_title)}</p>
+              <span class="reasoning">${escapeHTML(prediction.reasoning)}</span>
+            </div>
+            <div>
+              <span class="metric-label">Prediction</span>
+              <span class="metric-value">${pct(prediction.probability)}</span>
+            </div>
+            <div>
+              <span class="result-pill ${resultClass(prediction.result)}">${escapeHTML(prediction.result)}</span>
+              ${prediction.resolved ? `<span class="small">Brier ${prediction.brier.toFixed(3)}</span>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      `;
+      modal.classList.add('open');
+    }
+
     function closeModal() {
       modal.classList.remove('open');
     }
@@ -588,12 +676,21 @@
       statusEl.classList.toggle('error', isError);
     }
 
+    function resultClass(result) {
+      if (result === 'yes') return 'result-yes';
+      if (result === 'no') return 'result-no';
+      return 'result-open';
+    }
+
     async function localJSON(path, options) {
       const method = (options.method || 'GET').toUpperCase();
       const store = ensureLocalStore();
       if (method === 'GET' && path === '/api/agents') return clone(store.agents);
       if (method === 'GET' && path === '/api/markets') return localMarkets();
       if (method === 'GET' && path === '/api/leaderboard') return localLeaderboard();
+
+      const agentMatch = path.match(/^\/api\/agents\/([^/]+)\/history$/);
+      if (method === 'GET' && agentMatch) return localAgentHistory(agentMatch[1]);
 
       const match = path.match(/^\/api\/markets\/([^/]+)(?:\/(report|forecasts))?$/);
       if (!match) throw new Error(`${path} unavailable in local demo mode`);
@@ -618,6 +715,32 @@
         return enrichMarket(raw);
       }
       throw new Error(`${path} unavailable in local demo mode`);
+    }
+
+    function localAgentHistory(id) {
+      const store = ensureLocalStore();
+      const agent = store.agents.find(item => item.id === id);
+      if (!agent) throw new Error(`/api/agents/${id}/history 404`);
+      const predictions = store.markets
+        .slice()
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map(market => {
+          const stance = market.stances[id];
+          if (!stance) return null;
+          const [resolved, resolvedYes] = resolutionOutcome(market.resolution);
+          return {
+            market_id: market.id,
+            market_title: market.title,
+            probability: stance.probability,
+            reasoning: stance.reasoning,
+            resolution: market.resolution,
+            resolved,
+            result: resolved ? market.resolution : 'open',
+            brier: resolved ? brierBinary(stance.probability, resolvedYes) : 0
+          };
+        })
+        .filter(Boolean);
+      return { agent: clone(agent), predictions };
     }
 
     function ensureLocalStore() {

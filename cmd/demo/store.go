@@ -64,6 +64,22 @@ type LeaderEntry struct {
 	BaselineTotal float64 `json:"baseline_total"`
 }
 
+type AgentHistory struct {
+	Agent       Agent             `json:"agent"`
+	Predictions []AgentPrediction `json:"predictions"`
+}
+
+type AgentPrediction struct {
+	MarketID    string  `json:"market_id"`
+	MarketTitle string  `json:"market_title"`
+	Probability float64 `json:"probability"`
+	Reasoning   string  `json:"reasoning"`
+	Resolution  string  `json:"resolution"`
+	Resolved    bool    `json:"resolved"`
+	Result      string  `json:"result"`
+	Brier       float64 `json:"brier"`
+}
+
 type ForecastStore struct {
 	mu      sync.RWMutex
 	agents  []Agent
@@ -239,6 +255,62 @@ func (s *ForecastStore) Leaderboard() []LeaderEntry {
 		return leaders[i].BrierMean < leaders[j].BrierMean
 	})
 	return leaders
+}
+
+func (s *ForecastStore) AgentHistory(id string) (AgentHistory, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var selected Agent
+	found := false
+	for _, agent := range s.agents {
+		if agent.ID == id {
+			selected = agent
+			found = true
+			break
+		}
+	}
+	if !found {
+		return AgentHistory{}, false
+	}
+
+	markets := make([]Market, 0, len(s.markets))
+	for _, market := range s.markets {
+		markets = append(markets, market)
+	}
+	sort.SliceStable(markets, func(i, j int) bool {
+		return markets[i].ID < markets[j].ID
+	})
+
+	predictions := make([]AgentPrediction, 0, len(markets))
+	for _, market := range markets {
+		stance, ok := market.Stances[id]
+		if !ok {
+			continue
+		}
+		resolved, resolvedYes := resolutionOutcome(market.Resolution)
+		result := "open"
+		brier := 0.0
+		if resolved {
+			result = market.Resolution
+			brier = algo.BrierBinary(stance.Probability, resolvedYes)
+		}
+		predictions = append(predictions, AgentPrediction{
+			MarketID:    market.ID,
+			MarketTitle: market.Title,
+			Probability: stance.Probability,
+			Reasoning:   stance.Reasoning,
+			Resolution:  market.Resolution,
+			Resolved:    resolved,
+			Result:      result,
+			Brier:       brier,
+		})
+	}
+
+	return AgentHistory{
+		Agent:       selected,
+		Predictions: predictions,
+	}, true
 }
 
 func (s *ForecastStore) enrichedMarketLocked(market Market) Market {

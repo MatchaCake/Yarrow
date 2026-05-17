@@ -34,6 +34,7 @@ func NewRouter(store *ForecastStore) http.Handler {
 		}
 		writeJSON(w, store.Agents())
 	})
+	mux.HandleFunc("/api/agents/", agentRoute(store))
 	mux.HandleFunc("/api/markets", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			methodNotAllowed(w)
@@ -50,6 +51,27 @@ func NewRouter(store *ForecastStore) http.Handler {
 	})
 	mux.HandleFunc("/api/markets/", marketRoute(store))
 	return mux
+}
+
+func agentRoute(store *ForecastStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			methodNotAllowed(w)
+			return
+		}
+		path := strings.TrimPrefix(r.URL.Path, "/api/agents/")
+		parts := strings.Split(strings.Trim(path, "/"), "/")
+		if len(parts) != 2 || parts[0] == "" || parts[1] != "history" {
+			http.NotFound(w, r)
+			return
+		}
+		history, ok := store.AgentHistory(parts[0])
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		writeJSON(w, history)
+	}
 }
 
 func marketRoute(store *ForecastStore) http.HandlerFunc {

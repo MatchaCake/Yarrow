@@ -63,6 +63,63 @@ func TestLeaderboardReturnsFiveAgentsWithThreeResolvedMarkets(t *testing.T) {
 	}
 }
 
+func TestAgentHistoryEndpointReturnsPredictionsAndResults(t *testing.T) {
+	handler := testServer(t)
+	history := getJSON[struct {
+		Agent       Agent `json:"agent"`
+		Predictions []struct {
+			MarketID    string  `json:"market_id"`
+			MarketTitle string  `json:"market_title"`
+			Probability float64 `json:"probability"`
+			Reasoning   string  `json:"reasoning"`
+			Resolution  string  `json:"resolution"`
+			Resolved    bool    `json:"resolved"`
+			Result      string  `json:"result"`
+			Brier       float64 `json:"brier"`
+		} `json:"predictions"`
+	}](t, handler, "/api/agents/momentum_quant/history")
+
+	if history.Agent.ID != "momentum_quant" {
+		t.Fatalf("agent id = %q, want momentum_quant", history.Agent.ID)
+	}
+	if len(history.Predictions) != 10 {
+		t.Fatalf("predictions len = %d, want 10", len(history.Predictions))
+	}
+	for i := 1; i < len(history.Predictions); i++ {
+		if history.Predictions[i].MarketID < history.Predictions[i-1].MarketID {
+			t.Fatalf("predictions not sorted by market id at %d", i)
+		}
+	}
+
+	var openFound, resolvedFound bool
+	for _, prediction := range history.Predictions {
+		switch prediction.MarketID {
+		case "mkt_001":
+			openFound = true
+			if prediction.Resolved || prediction.Result != "open" || prediction.Brier != 0 {
+				t.Fatalf("open prediction = %+v, want unresolved open with zero brier", prediction)
+			}
+			if prediction.Probability != 0.55 || prediction.Reasoning == "" || prediction.MarketTitle == "" {
+				t.Fatalf("bad open prediction details: %+v", prediction)
+			}
+		case "mkt_003":
+			resolvedFound = true
+			if !prediction.Resolved || prediction.Result != "yes" {
+				t.Fatalf("resolved prediction = %+v, want yes result", prediction)
+			}
+			if prediction.Probability != 0.72 {
+				t.Fatalf("probability = %v, want 0.72", prediction.Probability)
+			}
+			if diff := abs(prediction.Brier - 0.0784); diff > 1e-9 {
+				t.Fatalf("brier = %v, want 0.0784", prediction.Brier)
+			}
+		}
+	}
+	if !openFound || !resolvedFound {
+		t.Fatalf("missing open=%v resolved=%v predictions", openFound, resolvedFound)
+	}
+}
+
 func TestReportEndpointReturnsSortedAgentBreakdownAndCI(t *testing.T) {
 	handler := testServer(t)
 	report := getJSON[Report](t, handler, "/api/markets/mkt_001/report")
