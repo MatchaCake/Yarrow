@@ -148,7 +148,7 @@ def build_specs() -> list[dict[str, Any]]:
         spec("weighted_avg_cdf_single", "weighted_avg_cdf", cdfs=[flat], weights=[1.0]),
         spec("weighted_avg_cdf_two", "weighted_avg_cdf", cdfs=[flat, sharp_mid], weights=[1.0, 2.0]),
         spec("weighted_avg_cdf_three", "weighted_avg_cdf", cdfs=[wide_left, smooth_mid, sharp_high], weights=[1.0, 2.0, 3.0]),
-        spec("weighted_avg_cdf_wide", "weighted_avg_cdf", cdfs=[wide_left, wide_right], weights=[4.0, 1.0]),
+        spec("weighted_avg_cdf_wide", "weighted_avg_cdf", cdfs=[wide_left, wide_right], weights=[2.0, 1.0]),
         spec("weighted_avg_cdf_smooth_low", "weighted_avg_cdf", cdfs=[smooth_low, flat, sharp_low], weights=[2.0, 3.0, 1.0]),
     ]
     specs += [
